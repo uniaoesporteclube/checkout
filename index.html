@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pagamento com PIX</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #F0F1F5;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            min-height: 100vh;
+            background-color: #F0F1F5;
+            align-items: center;
+            justify-content: center;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            margin-top: 10px;
+        }
+        .header i {
+            font-size: 24px;
+            color: #424242;
+            margin-right: 8px;
+        }
+        .header span {
+            font-size: 18px;
+            color: #424242;
+        }
+        .content {
+            background-color: #FFFFFF;
+            width: 100%;
+            max-width: 600px;
+            padding-bottom: 10px;
+            border-radius: 20px;
+        }
+        .product-info {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin-top: 8px;
+            margin-bottom: 4px;
+        }
+        .product-info i {
+            font-size: 24px;
+            color: #820AD2;
+            margin-right: 8px;
+        }
+        .product-info .product-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #424242;
+            flex-grow: 1;
+        }
+        .product-info .product-price {
+            font-size: 18px;
+            font-weight: bold;
+            color: #820CD0;
+        }
+        .divider {
+            height: 1px;
+            background-color: #F4F5F8;
+            margin: 8px 0;
+        }
+        .pay-title {
+            margin: 8px 8px 0 8px;
+            padding: 20px 0 5px 0;
+            font-size: 30px;
+            color: #212121;
+        }
+        .pay-instructions {
+            padding: 0 8px 20px 8px;
+            font-size: 20px;
+            color: #616161;
+        }
+        .qr-code {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 10px 0;
+            padding: 10px;
+            height: 250px;
+            position: relative;
+        }
+        .qr-code img {
+            width: 250px;
+            height: 250px;
+            margin: 0;
+            display: none;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(0, 0, 0, 0.1);
+            border-top: 5px solid #820AD2;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            transition: opacity 0.5s ease;
+            position: absolute;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .copy-button, .validate-button {
+            display: block;
+            margin: 15px auto;
+            padding: 10px 16px;
+            font-size: 18px;
+            text-align: center;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+        }
+        .copy-button {
+            background: linear-gradient(90deg, #9200F4, #820AD2);
+            color: #FFFFFF;
+            display: none;
+        }
+        .copy-button:hover {
+            background-color: #6f08b1;
+        }
+        .validate-button {
+            display: none;
+            background: linear-gradient(90deg, #4E75AF, #4CAF50);
+            color: #FFFFFF;
+        }
+        .validate-button:hover {
+            background-color: #218838;
+        }
+        .instructions-title {
+            padding: 8px 26px;
+            font-size: 20px;
+            color: #424242;
+        }
+        .instructions-text {
+            padding: 4px 26px;
+            font-size: 16px;
+            color: #757575;
+        }
+        .toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #820AD2;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 12px;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 16px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: visibility 0s, opacity 0.5s ease-in-out;
+            opacity: 0;
+            z-index: 1000;
+        }
+        .toast.show {
+            visibility: visible;
+            opacity: 1;
+        }
+        .copy-code {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #FFFFFF;
+            border: 1px solid #212121;
+            color: #212121;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+        .copy-code i {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <i class="fas fa-lock"></i>
+            <span>União Esporte Clube</span>
+        </div>
+        <div class="content">
+            <div class="product-info">
+                <i class="fas fa-shopping-bag"></i>
+                <span class="product-name">Produto</span>
+                <span class="product-price">R$ 0</span>
+            </div>
+            <div class="divider"></div>
+            <div class="pay-title">Pagar com PIX</div>
+            <div class="pay-instructions">Escaneie o QR Code ou Copie a Chave</div>
+            <div class="qr-code">
+                <div class="spinner" id="spinner"></div>
+                <img id="qrCodeImage" src="default_qr.png" alt="QR Code" onload="hideSpinner()">
+            </div>
+            <button class="copy-button" id="copyButton">
+           <i class="fas fa-copy"></i> Copiar código do QR Code
+            </button>
+            <button class="validate-button" id="validateButton" onclick="validatePayment()">
+           <i class="fas fa-check"></i> Validar pagamento</button>
+            <div class="divider"></div>
+            <div class="instructions-title">Instruções de pagamento</div>
+            <div class="instructions-text">
+                1. Abra o aplicativo do seu banco;<br>
+                2. Entre na Área Pix e busque a opção de pagar com Pix Copia e Cola;<br>
+                3. Insira o código copiado desta cobrança;<br>
+                4. Revise o pagamento e confirme.<br>
+            </div>
+        </div>
+        <br>
+        <div class="content"><br>
+       <div class="instructions-title">Processamento</div>
+      <div class="instructions-text">
+        Após a confirmação do pagamento, envie o comprovante para equipe União. Assim que validarmos, você receberá a confirmação com seus números.<p>
+        <div class="copy-code" id="wpp-btn" aria-label="Enviar comprovante via WhatsApp">
+                <i class="fab fa-whatsapp" onclick="validatePayment()"></i> Enviar comprovante
+        </div>
+    </div>
+</div>
+   <p>
+    </div>
+    
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">Chave PIX copiada para a Área de transferência!</div>
+
+    <script>
+    	let WentOutToMakeThePayment = false;
+    
+    	document.addEventListener("visibilitychange", function() {
+        if (document.hidden) {
+         } else {
+         if (WentOutToMakeThePayment) {
+         document.getElementById("validateButton").style.display = "block";
+          } else {}
+         }
+        });
+        
+    	document.getElementById('wpp-btn').addEventListener('click', function() {
+            sendPaymentNotification();
+        });
+        
+    	 // Função para gerar e salvar a id se ela ainda não existir ou se já tiver expirado
+function getId() {
+    const storedData = localStorage.getItem("userId");
+    
+    if (storedData) {
+        const { id, expires } = JSON.parse(storedData);
+        const now = new Date().getTime();
+
+        // Verifica se o id ainda é válido (dentro do período de 24 horas)
+        if (now < expires) {
+            return id; // Retorna o id existente
+        }
+    }
+
+    // Caso contrário, gera um novo id e define o prazo de validade de 24 horas
+    const id = generateId();
+    const expires = new Date().getTime() + 24 * 60 * 60 * 1000; // 24 horas em milissegundos
+
+    // Salva o id e a data de expiração no localStorage
+    localStorage.setItem("userId", JSON.stringify({ id, expires }));
+
+    return id;
+}
+
+       let id = getId();
+
+        async function fetchPixData() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const product = urlParams.get('product') || 'Produto';
+            const item = urlParams.get('item') || 'Item';
+            const price = urlParams.get('price') || '0';
+            const payment = urlParams.get('payment') || '0';
+            
+            document.querySelector('.product-name').textContent = product;
+            document.querySelector('.product-price').textContent = `R$ ${payment}`;
+
+            const description = `Pagamento do pedido ${id}`;
+            const pixUrl = `https://pix.ae?chave=10998604666&tipo=cpf&nome=Dari Veloso Neto&info=${description}&valor=${payment}`;
+            
+            try {
+                const response = await fetch(pixUrl, { method: 'POST' });
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    document.getElementById("qrCodeImage").src = data.qrbase64;
+                    document.getElementById("copyButton").onclick = () => copyToClipboard(data.qrstring);
+                } 
+            } catch (error) {
+                console.error("Erro ao obter QR Code:", error);
+            }
+        }
+
+        function hideSpinner() {
+            const spinner = document.getElementById("spinner");
+            const qrCodeImage = document.getElementById("qrCodeImage");
+
+            spinner.style.opacity = "0";
+            setTimeout(() => {
+                spinner.style.display = "none";
+                copyButton.style.display = "block";
+                qrCodeImage.style.display = "block";
+            }, 50);
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast("Chave PIX copiada para a área de transferência!");
+                WentOutToMakeThePayment = true;
+            }).catch(err => {
+                console.error("Erro ao copiar o código:", err);
+                showToast("Erro ao copiar chave PIX.");
+            });
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById("toast");
+            toast.textContent = message;
+            toast.classList.add("show");
+
+            setTimeout(() => {
+                toast.classList.remove("show");
+            }, 3000);
+        }
+
+        function sendPaymentNotification() {
+       showToast("Por favor, aguarde um instante...");
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const product = document.querySelector('.product-name').textContent;
+    const price = urlParams.get('price') || '0';
+    const payment = urlParams.get('payment') || '0';
+    const fee = payment - price;
+    const message = `Novo pagamento identificado #${id}\n\nDetalhes do pedido\n1x R$ ${price} (${product})\n1x R$ ${fee} (Taxa de processamento)`;
+    const botAPI = '7545115815:AAH3stNlXkfuDTu4TQH0e4CZb09Amx57oQw';
+    const chatId = '-1002469985309';
+
+    // Verifica se a notificação já foi enviada para esse ID
+    if (localStorage.getItem(`notification_${id}`) === 'true') {
+    	validatePayment();
+        // Notificação ja enviada
+        return; // Impede o envio repetido
+    }
+
+    // Enviando a mensagem via BotAPI do Telegram
+    fetch(`https://api.telegram.org/bot${botAPI}/sendMessage`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            chat_id: chatId,
+            text: message
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.ok) {
+            // Salva no localStorage que a notificação foi enviada para esse ID
+            localStorage.setItem(`notification_${id}`, 'true');
+            validatePayment();
+        } else {
+            validatePayment();
+        }
+    })
+    .catch(error => {
+        validatePayment();
+    });
+}
+
+        function validatePayment() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const product = document.querySelector('.product-name').textContent;
+        const price = urlParams.get('price') || '0';
+        const amount = urlParams.get('amount') || '0';
+        const payment = urlParams.get('payment') || '0';
+        const fee = payment - price;
+        const message = `Realizei o pagamento das rifas
+> #${id} 
+
+Detalhes R$ ${payment}
+${amount} rifas compradas pelo site
+
+        window.open(`https://wa.me/+553398609639?text=${encodeURIComponent(message)}`, '_blank');
+    }
+
+    function generateId() {
+            return Math.random().toString(36).substring(2, 8).toUpperCase();
+        }
+
+    window.onload = fetchPixData;
+    </script>
+</body>
+</html>
