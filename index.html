@@ -295,7 +295,7 @@ function getId() {
             document.querySelector('.product-price').textContent = `R$ ${payment}`;
 
             const description = `Pagamento do pedido ${id}`;
-            const pixUrl = `https://pix.ae?chave=10998604666&tipo=cpf&nome=Dari Veloso Neto&info=${description}&valor=${payment}`;
+            const pixUrl = `https://pix.ae?chave=e044de50-10b5-418a-9fcd-d02ce21414cb&tipo=aleatoria&nome=Dari Veloso Neto&info=${description}&valor=${payment}`;
             
             try {
                 const response = await fetch(pixUrl, { method: 'POST' });
